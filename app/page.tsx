@@ -20,6 +20,7 @@ export default function Home() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [failedMessage, setFailedMessage] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000", [])
@@ -32,6 +33,7 @@ export default function Home() {
     setMessages(nextMessages)
     setInput("")
     setError(null)
+    setFailedMessage(null)
     setIsLoading(true)
     try {
       const response = await fetch(`${apiUrl}/api/chat`, {
@@ -44,6 +46,7 @@ export default function Home() {
       if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("The backend returned an empty reply.")
       setMessages([...nextMessages, { role: "assistant", content: data.reply }])
     } catch (err) {
+      setFailedMessage(trimmed)
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
@@ -80,14 +83,14 @@ export default function Home() {
           <div className={styles.messages}>
             {messages.map((message, index) => <article className={`${styles.message} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`} key={`${message.role}-${index}`}><div className={styles.messageLabel}>{message.role === "user" ? "You" : <><SparkIcon /> Dev News</>}</div><p>{message.content}</p></article>)}
             {isLoading && <article className={`${styles.message} ${styles.assistantMessage}`}><div className={styles.messageLabel}><SparkIcon /> Dev News</div><div className={styles.typing}><i /><i /><i /></div></article>}
-            {error && <div className={styles.error} role="alert"><span>{error}</span><button onClick={() => void sendMessage(messages[messages.length - 1]?.content)}>Retry</button></div>}
+            {error && <div className={styles.error} role="alert"><span>{error}</span><button onClick={() => failedMessage && void sendMessage(failedMessage)}>Retry</button></div>}
           </div>
         )}
       </section>
 
       <div className={styles.composerWrap}>
         <div className={styles.composer}>
-          <textarea ref={textareaRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleKeyDown} placeholder="Ask about developer news..." aria-label="Your question" rows={1} disabled={isLoading} />
+          <textarea ref={textareaRef} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleKeyDown} placeholder="Ask about developer news..." aria-label="Your question" rows={1} disabled={isLoading} aria-busy={isLoading} />
           <button className={styles.send} onClick={() => void sendMessage()} disabled={!input.trim() || isLoading} aria-label="Send message"><span>Send</span><b>↗</b></button>
         </div>
         <p className={styles.hint}>Press <kbd>Enter</kbd> to send <span>·</span> <kbd>Shift + Enter</kbd> for a new line</p>
