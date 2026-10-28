@@ -3,7 +3,8 @@
 import { useMemo, useRef, useState } from "react"
 import styles from "./page.module.css"
 
-type Message = { role: "user" | "assistant"; content: string }
+type Article = { title: string; url: string; published_at: string; source: string }
+type Message = { role: "user" | "assistant"; content: string; articles?: Article[] }
 
 const suggestions = [
   { eyebrow: "AI / ML", text: "What’s new in AI today?" },
@@ -23,7 +24,8 @@ export default function Home() {
   const [failedMessage, setFailedMessage] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000", [])
+  const apiUrl = useMemo(() => (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, ""), [])
+
   const hasConversation = messages.length > 0
 
   async function sendMessage(content = input) {
@@ -44,7 +46,7 @@ export default function Home() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.detail || "The news service could not answer right now.")
       if (typeof data.reply !== "string" || !data.reply.trim()) throw new Error("The backend returned an empty reply.")
-      setMessages([...nextMessages, { role: "assistant", content: data.reply }])
+      setMessages([...nextMessages, { role: "assistant", content: data.reply, articles: Array.isArray(data.articles) ? data.articles : [] }])
     } catch (err) {
       setFailedMessage(trimmed)
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
@@ -81,7 +83,7 @@ export default function Home() {
           </div>
         ) : (
           <div className={styles.messages}>
-            {messages.map((message, index) => <article className={`${styles.message} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`} key={`${message.role}-${index}`}><div className={styles.messageLabel}>{message.role === "user" ? "You" : <><SparkIcon /> Dev News</>}</div><p>{message.content}</p></article>)}
+            {messages.map((message, index) => <article className={`${styles.message} ${message.role === "user" ? styles.userMessage : styles.assistantMessage}`} key={`${message.role}-${index}`}><div className={styles.messageLabel}>{message.role === "user" ? "You" : <><SparkIcon /> Dev News</>}</div><p>{message.content}</p>{message.articles && message.articles.length > 0 && <div className={styles.sources}><div className={styles.sourcesTitle}>Sources checked</div>{message.articles.map((article) => <a className={styles.source} href={article.url} target="_blank" rel="noreferrer" key={article.url}><span>{article.title}</span><small>{article.source} · {new Date(article.published_at).toLocaleDateString()}</small></a>)}</div>}</article>)}
             {isLoading && <article className={`${styles.message} ${styles.assistantMessage}`}><div className={styles.messageLabel}><SparkIcon /> Dev News</div><div className={styles.typing}><i /><i /><i /></div></article>}
             {error && <div className={styles.error} role="alert"><span>{error}</span><button onClick={() => failedMessage && void sendMessage(failedMessage)}>Retry</button></div>}
           </div>

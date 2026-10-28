@@ -43,6 +43,12 @@
 .assistantMessage .messageLabel { color: #a8db5c; }
 .messageLabel .spark { margin-right: 5px; }
 .message p { color: #e5e3dd; white-space: pre-wrap; line-height: 1.65; font-size: 14px; margin: 0; }
+.sources { display: grid; gap: 8px; margin-top: 18px; max-width: 560px; }
+.sourcesTitle { color: #8e9097; font: 10px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+.source { display: grid; gap: 3px; color: #d8e6b8; background: #191d18; border: 1px solid #303a29; border-radius: 6px; padding: 9px 11px; text-decoration: none; transition: border-color .2s, background .2s; }
+.source:hover { background: #20281d; border-color: #71844c; }
+.source span { font-size: 12px; line-height: 1.4; }
+.source small { color: #82857d; font: 10px 'DM Mono', monospace; }
 .userMessage p { display: inline-block; text-align: left; color: #18191d; background: #c5f36a; border-radius: 12px 12px 2px 12px; padding: 12px 15px; }
 .typing { display: flex; gap: 5px; padding: 12px 0; }
 .typing i { width: 5px; height: 5px; border-radius: 50%; background: #a8db5c; animation: pulse 1s infinite alternate; }
