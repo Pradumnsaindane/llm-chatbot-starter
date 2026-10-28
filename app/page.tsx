@@ -92,7 +92,7 @@ export default function Home() {
         </div>
         <p className={styles.hint}>Press <kbd>Enter</kbd> to send <span>·</span> <kbd>Shift + Enter</kbd> for a new line</p>
       </div>
-      <footer><span>Answers are powered by your local backend.</span><span>News access depends on its configuration.</span></footer>
+      <footer className={styles.footer}><span>Answers are powered by your local backend.</span><span>News access depends on its configuration.</span></footer>
     </main>
   )
 }
