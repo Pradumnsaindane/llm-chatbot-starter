@@ -24,7 +24,7 @@ export default function Home() {
   const [failedMessage, setFailedMessage] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const apiUrl = useMemo(() => (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").replace(/\/$/, ""), [])
+  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "", [])
 
   const hasConversation = messages.length > 0
 
@@ -38,6 +38,9 @@ export default function Home() {
     setFailedMessage(null)
     setIsLoading(true)
     try {
+      if (!apiUrl) {
+        throw new Error("NEXT_PUBLIC_API_URL is not configured. Add it in the v0 project Environment Variables settings.")
+      }
       const response = await fetch(`${apiUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
