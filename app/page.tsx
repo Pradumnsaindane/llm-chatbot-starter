@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useRef, useState } from "react"
 import styles from "./page.module.css"
 
 type Article = { title: string; url: string; published_at: string; source: string }
@@ -24,8 +24,6 @@ export default function Home() {
   const [failedMessage, setFailedMessage] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "", [])
-
   const hasConversation = messages.length > 0
 
   async function sendMessage(content = input) {
@@ -38,10 +36,7 @@ export default function Home() {
     setFailedMessage(null)
     setIsLoading(true)
     try {
-      if (!apiUrl) {
-        throw new Error("NEXT_PUBLIC_API_URL is not configured. Add it in the v0 project Environment Variables settings.")
-      }
-      const response = await fetch(`${apiUrl}/api/chat`, {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
@@ -100,7 +95,7 @@ export default function Home() {
         </div>
         <p className={styles.hint}>Press <kbd>Enter</kbd> to send <span>·</span> <kbd>Shift + Enter</kbd> for a new line</p>
       </div>
-      <footer className={styles.footer}><span>Answers are powered by your local backend.</span><span>News access depends on its configuration.</span></footer>
+      <footer className={styles.footer}><span>Answers are generated server-side.</span><span>News access uses live DEV Community sources.</span></footer>
     </main>
   )
 }
