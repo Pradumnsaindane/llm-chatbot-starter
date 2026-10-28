@@ -1,6 +1,6 @@
 # LLM Chatbot API
 
-A stateless FastAPI backend that sends real user messages and recent conversation context to a pretrained model through the OpenAI chat-completions API. It never generates canned or fallback replies. No frontend is included in this repository.
+A stateless FastAPI backend that sends real user messages and recent conversation context to a pretrained model through the OpenAI chat-completions API. It never generates canned or fallback replies. The repository also includes a Next.js frontend for the chat experience.
 
 ## Requirements
 
@@ -25,6 +25,15 @@ Start the API:
 ```bash
 uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
+
+In a second terminal, install and start the frontend:
+
+```bash
+npm install
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 npm run dev
+```
+
+Open http://localhost:3000. Set `NEXT_PUBLIC_API_URL` to the deployed FastAPI origin when hosting the frontend elsewhere. The frontend only sends conversation text to `/api/chat`; provider credentials remain server-side in the FastAPI `.env`.
 
 Open http://127.0.0.1:8000/docs for interactive API docs. `GET /health` reports API process health; it does not make a billable provider request.
 
