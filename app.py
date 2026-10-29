@@ -1,6 +1,7 @@
 """Small, stateless FastAPI gateway to an OpenAI-compatible chat model."""
 
 import os
+from datetime import datetime, timezone
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -58,8 +59,44 @@ class ChatRequest(BaseModel):
         return self
 
 
+class Article(BaseModel):
+    title: str
+    url: str
+    published_at: str
+    source: str = "DEV Community"
+
+
 class ChatResponse(BaseModel):
     reply: str
+    articles: list[Article] = Field(default_factory=list)
+
+
+async def fetch_recent_articles() -> tuple[list[Article], str]:
+    try:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as http_client:
+            response = await http_client.get(
+                "https://dev.to/api/articles",
+                params={"per_page": 8, "top": 7},
+                headers={"Accept": "application/json", "User-Agent": "dev-news-chat/1.0"},
+            )
+            response.raise_for_status()
+            payload = response.json()
+        articles = [
+            Article(
+                title=item["title"],
+                url=item["url"],
+                published_at=item["published_at"],
+            )
+            for item in payload
+            if item.get("title") and item.get("url") and item.get("published_at")
+        ][:8]
+        if not articles:
+            return [], "No recent DEV Community articles could be verified right now. Do not present unverified or outdated news as current."
+        return articles, "Verified recent DEV Community articles (use only these sources for current-news claims):\n" + "\n".join(
+            f"- {article.title} | {article.published_at} | {article.url}" for article in articles
+        )
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        return [], "Current DEV Community news could not be verified because the news source is unavailable. Say that clearly instead of relying on outdated knowledge."
 
 
 @app.get("/")
@@ -89,13 +126,20 @@ async def chat(request: ChatRequest):
     if not model:
         raise HTTPException(status_code=503, detail="LLM_MODEL must not be empty.")
 
+    articles, news_context = await fetch_recent_articles()
+    today = datetime.now(timezone.utc).date().isoformat()
     client = AsyncOpenAI(api_key=api_key, base_url=base_url, timeout=30.0, max_retries=1)
     messages = [
         {
             "role": "system",
             "content": (
-                "You are a helpful, clear, and friendly AI assistant. Answer the user's question directly. "
-                "If you are uncertain, say so. Use Markdown when it makes the answer easier to read."
+                "You are a helpful, clear, and friendly AI assistant for developer news. "
+                f"The current UTC date is {today}. Answer the user's question directly. "
+                "For current-news claims, use only the verified source context below. "
+                "Do not call anything today's news unless its published date confirms that. "
+                "If the source context says news could not be verified, say so plainly and do not invent or rely on stale knowledge. "
+                "Use Markdown when it makes the answer easier to read.\n\n"
+                f"{news_context}"
             ),
         },
         *[message.model_dump() for message in request.messages],

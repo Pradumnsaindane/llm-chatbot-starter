@@ -1,6 +1,6 @@
 # LLM Chatbot API
 
-A stateless FastAPI backend that sends real user messages and recent conversation context to a pretrained model through the OpenAI chat-completions API. It never generates canned or fallback replies. No frontend is included in this repository.
+A stateless FastAPI backend that sends real user messages and recent conversation context to a pretrained model through the OpenAI chat-completions API. It never generates canned or fallback replies. The repository also includes a Next.js frontend for the chat experience.
 
 ## Requirements
 
@@ -25,6 +25,29 @@ Start the API:
 ```bash
 uvicorn app:app --reload --host 127.0.0.1 --port 8000
 ```
+
+In a second terminal, install and start the frontend:
+
+```bash
+npm install
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000 npm run dev
+```
+
+Open http://localhost:3000. The frontend sends the full bounded conversation to `/api/chat`. Provider credentials remain server-side in the FastAPI `.env`.
+
+For the hosted v0 preview, `127.0.0.1` means the browser's own computer, not this backend. Run the FastAPI service on a public HTTPS host (for example, a deployed service or an HTTPS tunnel), then set the frontend project variable to the exact URL you control:
+
+```bash
+NEXT_PUBLIC_API_URL=https://YOUR-REAL-BACKEND-HOST
+```
+
+Also set the backend variable to the exact frontend origin, including scheme and host:
+
+```bash
+CORS_ORIGINS=https://YOUR-FRONTEND-HOST
+```
+
+Do not invent or reuse a placeholder URL; verify `https://YOUR-REAL-BACKEND-HOST/health` returns `{"status":"ok"}` before testing chat. The public backend must keep `OPENAI_API_KEY` server-side.
 
 Open http://127.0.0.1:8000/docs for interactive API docs. `GET /health` reports API process health; it does not make a billable provider request.
 
